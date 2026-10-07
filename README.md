@@ -81,4 +81,6 @@ For local login, set both credentials in the ignored `.dev.vars` and also regist
 
 After configuration, deploy both the API Worker and Pages using `npm run deploy:api` and `npm run deploy:pages` (after `npm run build`). Local file edits or a Pages-only deployment do not update the API Worker. Before deployment, run `npm run typecheck`, `npm run build:api`, `npm run build`, and `npm run test:integration`.
 
+Pages rejects `--config wrangler.pages.jsonc`. The `deploy:pages` helper reads that configuration, stages the built frontend and Pages Functions with a standard `wrangler.jsonc`, and deploys to the `main` production branch. It preserves the `API` service binding and leaves the API Worker's root configuration unchanged. Run `npm run deploy:pages -- --check` to validate the staged Pages configuration and Functions build without uploading anything.
+
 If sign-in fails after deployment, the final login URL includes a safe `reason` such as `state_mismatch`, `token_exchange_rejected`, or `profile_request_rejected`; the Worker logs the same stage and any upstream HTTP status without authorization codes, tokens, or secrets. OAuth attempts expire after ten minutes; sign in from one tab and start again after a deployment.

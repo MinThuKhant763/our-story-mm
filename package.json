@@ -19,7 +19,7 @@
     "test:workers": "node --test tests/reminders.test.mjs tests/openings.test.mjs",
     "test:integration": "node tests/cloudflare.mjs",
     "deploy:api": "node scripts/check-production.mjs && wrangler deploy --config wrangler.jsonc",
-    "deploy:pages": "wrangler pages deploy dist --config wrangler.pages.jsonc",
+    "deploy:pages": "node scripts/deploy-pages.mjs",
     "test:render": "node tests/occasion-render.cjs",
     "test:timer": "node --test tests/fiber-timer.test.mjs",
     "test:operations": "node --test tests/cloudflare-operations.mjs",

@@ -61,7 +61,7 @@ Sign in with the verified Google account whose email matches `OWNER_EMAIL`, then
 
 For public production sign-in, configure a custom domain you own on Pages, update Worker APP_URL and the Google OAuth callback, then redeploy the Worker and Pages. Use one canonical hostname. Account and PIN cookies are Secure, HttpOnly, SameSite=Lax and host-only; moving domains requires signing in again.
 
-The Pages build command is `npm run build`, output directory `dist`, with project-root `functions/`. Direct CLI deployment is provided. If using Git integration, explicitly configure `wrangler.pages.jsonc`/the `API` service binding in Pages settings rather than selecting the API `wrangler.jsonc` as the Pages configuration.
+The Pages build command is `npm run build`, output directory `dist`, with project-root `functions/`. Use `npm run deploy:pages` for CLI deployment: its helper stages `wrangler.pages.jsonc` under the standard `wrangler.jsonc` filename in a temporary deployment folder, since Pages rejects custom `--config` paths. It preserves the `API` service binding and targets production branch `main`. Run `npm run deploy:pages -- --check` to validate the staged configuration and Functions build without uploading. If using Git integration, explicitly configure the `API` service binding in Pages settings rather than selecting the API `wrangler.jsonc` as the Pages configuration.
 
 ## 4. Move existing SQLite data
 
