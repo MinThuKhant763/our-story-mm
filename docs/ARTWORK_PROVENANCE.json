@@ -1,0 +1,100 @@
+{
+  "generation": "ChatGPT built-in image generation",
+  "model": "The built-in tool does not expose a selectable or verifiable model version; no image 2.5 claim.",
+  "created": "2026-10-07",
+  "post_processing": "RGB conversion, proportionate downscale to 1200px maximum edge, WebP quality 86. No content edits.",
+  "shared_occasion_prompt": "Use case: stylized-concept. Asset type: standalone square occasion card artwork for the OurStory Myanmar gift web app. Composition: one cohesive centered still-life, generous breathing room, all objects fully in frame, works in square and 4:3 crop. Premium editorial lighting, soft believable shadows, richly tactile details, polished but warm. No people, no text, no logos, no watermark. Single finished image, no collage or UI.",
+  "shared_template_prompt": "Use case: stylized-concept. Asset type: square design template artwork for OurStory Myanmar personal gift app. Composition: one polished cohesive centered still life, objects contained within frame, enough breathing room for square and 4:3 crops. Premium studio lighting, realistic materials and soft shadows, warm emotional mood. No text or lettering of any kind, no people, no logos, no watermark, no UI, no collage. Single finished image.",
+  "assets": [
+    {
+      "id": "anniversary",
+      "path": "public/images/occasions/anniversary.webp",
+      "width": 1200,
+      "height": 1200,
+      "bytes": 157642,
+      "scene_prompt": "A romantic anniversary keepsake: a blush satin gift box with a flowing deep rose ribbon, two small gold intertwined hearts, and delicate peach roses, on a warm ivory studio plinth. Elegant tactile matte 3D rendering, realistic satin highlights.",
+      "full_prompt": "Use case: stylized-concept\nAsset type: standalone square occasion card artwork for the OurStory Myanmar gift web app.\nPrimary request: A romantic anniversary keepsake: a blush satin gift box with a flowing deep rose ribbon, two small gold intertwined hearts, and delicate peach roses, on a warm ivory studio plinth. Elegant tactile matte 3D rendering, realistic satin highlights.\nComposition: one cohesive centered still-life, generous breathing room, all objects fully in frame, works in square and 4:3 crop. Premium editorial lighting, soft believable shadows, richly tactile details, polished but warm. No people, no text, no logos, no watermark. Single finished image, no collage or UI."
+    },
+    {
+      "id": "birthday",
+      "path": "public/images/occasions/birthday.webp",
+      "width": 1200,
+      "height": 1200,
+      "bytes": 133888,
+      "scene_prompt": "A joyful birthday keepsake: a lavender gift box with pale golden bow, small birthday cake with three lit candles, soft peach and lilac balloons, restrained confetti. Elegant tactile matte 3D rendering on a pale lavender studio plinth.",
+      "full_prompt": "Use case: stylized-concept\nAsset type: standalone square occasion card artwork for the OurStory Myanmar gift web app.\nPrimary request: A joyful birthday keepsake: a lavender gift box with pale golden bow, small birthday cake with three lit candles, soft peach and lilac balloons, restrained confetti. Elegant tactile matte 3D rendering on a pale lavender studio plinth.\nComposition: one cohesive centered still-life, generous breathing room, all objects fully in frame, works in square and 4:3 crop. Premium editorial lighting, soft believable shadows, richly tactile details, polished but warm. No people, no text, no logos, no watermark. Single finished image, no collage or UI."
+    },
+    {
+      "id": "valentine",
+      "path": "public/images/occasions/valentine.webp",
+      "width": 1200,
+      "height": 1200,
+      "bytes": 165026,
+      "scene_prompt": "A Valentine keepsake: a sculpted ruby heart beside a rose bouquet and a cream letter envelope sealed with a small wax heart, deep crimson and warm blush. Elegant tactile matte 3D rendering on a warm pale pink studio plinth.",
+      "full_prompt": "Use case: stylized-concept\nAsset type: standalone square occasion card artwork for the OurStory Myanmar gift web app.\nPrimary request: A Valentine keepsake: a sculpted ruby heart beside a rose bouquet and a cream letter envelope sealed with a small wax heart, deep crimson and warm blush. Elegant tactile matte 3D rendering on a warm pale pink studio plinth.\nComposition: one cohesive centered still-life, generous breathing room, all objects fully in frame, works in square and 4:3 crop. Premium editorial lighting, soft believable shadows, richly tactile details, polished but warm. No people, no text, no logos, no watermark. Single finished image, no collage or UI."
+    },
+    {
+      "id": "wedding",
+      "path": "public/images/occasions/wedding.webp",
+      "width": 1200,
+      "height": 1200,
+      "bytes": 159842,
+      "scene_prompt": "A wedding keepsake: two delicate gold wedding bands, an ivory ribbon gift box and white rose bouquet with eucalyptus, graceful understated elegance. Elegant tactile matte 3D rendering on a warm ivory studio plinth.",
+      "full_prompt": "Use case: stylized-concept\nAsset type: standalone square occasion card artwork for the OurStory Myanmar gift web app.\nPrimary request: A wedding keepsake: two delicate gold wedding bands, an ivory ribbon gift box and white rose bouquet with eucalyptus, graceful understated elegance. Elegant tactile matte 3D rendering on a warm ivory studio plinth.\nComposition: one cohesive centered still-life, generous breathing room, all objects fully in frame, works in square and 4:3 crop. Premium editorial lighting, soft believable shadows, richly tactile details, polished but warm. No people, no text, no logos, no watermark. Single finished image, no collage or UI."
+    },
+    {
+      "id": "graduation",
+      "path": "public/images/occasions/graduation.webp",
+      "width": 1200,
+      "height": 1200,
+      "bytes": 150222,
+      "scene_prompt": "A graduation keepsake: a midnight navy graduation cap with golden tassel, rolled diploma tied with a gold ribbon, and a navy gift box, little golden stars. Elegant tactile matte 3D rendering on a pale blue studio plinth.",
+      "full_prompt": "Use case: stylized-concept\nAsset type: standalone square occasion card artwork for the OurStory Myanmar gift web app.\nPrimary request: A graduation keepsake: a midnight navy graduation cap with golden tassel, rolled diploma tied with a gold ribbon, and a navy gift box, little golden stars. Elegant tactile matte 3D rendering on a pale blue studio plinth.\nComposition: one cohesive centered still-life, generous breathing room, all objects fully in frame, works in square and 4:3 crop. Premium editorial lighting, soft believable shadows, richly tactile details, polished but warm. No people, no text, no logos, no watermark. Single finished image, no collage or UI."
+    },
+    {
+      "id": "film",
+      "path": "public/images/templates/film.webp",
+      "width": 1200,
+      "height": 1200,
+      "bytes": 219256,
+      "scene_prompt": "An open linen-covered photo album with empty cream photo mats, a tiny vintage camera, dried flowers and a champagne ribbon. Warm honey and olive palette, tactile nostalgic editorial still life.",
+      "full_prompt": "Use case: stylized-concept\nAsset type: square design template artwork for OurStory Myanmar personal gift app.\nPrimary request: An open linen-covered photo album with empty cream photo mats, a tiny vintage camera, dried flowers and a champagne ribbon. Warm honey and olive palette, tactile nostalgic editorial still life.\nComposition: one polished cohesive centered still life, objects contained within frame, enough breathing room for square and 4:3 crops. Premium studio lighting, realistic materials and soft shadows, warm emotional mood. No text or lettering of any kind, no people, no logos, no watermark, no UI, no collage. Single finished image."
+    },
+    {
+      "id": "night",
+      "path": "public/images/templates/night.webp",
+      "width": 1200,
+      "height": 1200,
+      "bytes": 171620,
+      "scene_prompt": "A sculpted golden crescent moon holding a small heart, delicate golden stars, and a midnight teal gift box tied with an ivory ribbon. Dreamy dark teal studio backdrop, exquisite tactile 3D editorial still life.",
+      "full_prompt": "Use case: stylized-concept\nAsset type: square design template artwork for OurStory Myanmar personal gift app.\nPrimary request: A sculpted golden crescent moon holding a small heart, delicate golden stars, and a midnight teal gift box tied with an ivory ribbon. Dreamy dark teal studio backdrop, exquisite tactile 3D editorial still life.\nComposition: one polished cohesive centered still life, objects contained within frame, enough breathing room for square and 4:3 crops. Premium studio lighting, realistic materials and soft shadows, warm emotional mood. No text or lettering of any kind, no people, no logos, no watermark, no UI, no collage. Single finished image."
+    },
+    {
+      "id": "scrapbook",
+      "path": "public/images/templates/scrapbook.webp",
+      "width": 1200,
+      "height": 1200,
+      "bytes": 258626,
+      "scene_prompt": "A handmade kraft scrapbook with blank ivory Polaroid frames, paper hearts, peach washi tape and a little wrapped gift. Layered real paper texture, warm peach and caramel colors, tactile editorial still life.",
+      "full_prompt": "Use case: stylized-concept\nAsset type: square design template artwork for OurStory Myanmar personal gift app.\nPrimary request: A handmade kraft scrapbook with blank ivory Polaroid frames, paper hearts, peach washi tape and a little wrapped gift. Layered real paper texture, warm peach and caramel colors, tactile editorial still life.\nComposition: one polished cohesive centered still life, objects contained within frame, enough breathing room for square and 4:3 crops. Premium studio lighting, realistic materials and soft shadows, warm emotional mood. No text or lettering of any kind, no people, no logos, no watermark, no UI, no collage. Single finished image."
+    },
+    {
+      "id": "aurora",
+      "path": "public/images/templates/aurora.webp",
+      "width": 1200,
+      "height": 1200,
+      "bytes": 221284,
+      "scene_prompt": "A luminous pearl heart inside an orbital golden ring, lavender and turquoise aurora-like silk ribbons around a midnight navy keepsake box. Dreamlike midnight blue backdrop, cinematic iridescent studio 3D still life.",
+      "full_prompt": "Use case: stylized-concept\nAsset type: square design template artwork for OurStory Myanmar personal gift app.\nPrimary request: A luminous pearl heart inside an orbital golden ring, lavender and turquoise aurora-like silk ribbons around a midnight navy keepsake box. Dreamlike midnight blue backdrop, cinematic iridescent studio 3D still life.\nComposition: one polished cohesive centered still life, objects contained within frame, enough breathing room for square and 4:3 crops. Premium studio lighting, realistic materials and soft shadows, warm emotional mood. No text or lettering of any kind, no people, no logos, no watermark, no UI, no collage. Single finished image."
+    },
+    {
+      "id": "garden",
+      "path": "public/images/templates/garden.webp",
+      "width": 1200,
+      "height": 1200,
+      "bytes": 235458,
+      "scene_prompt": "An elegant hand-tied bouquet of peach roses, soft white daisies and eucalyptus beside a sage green gift box, framed by a graceful botanical arch. Ivory and sage background, tactile botanical editorial still life.",
+      "full_prompt": "Use case: stylized-concept\nAsset type: square design template artwork for OurStory Myanmar personal gift app.\nPrimary request: An elegant hand-tied bouquet of peach roses, soft white daisies and eucalyptus beside a sage green gift box, framed by a graceful botanical arch. Ivory and sage background, tactile botanical editorial still life.\nComposition: one polished cohesive centered still life, objects contained within frame, enough breathing room for square and 4:3 crops. Premium studio lighting, realistic materials and soft shadows, warm emotional mood. No text or lettering of any kind, no people, no logos, no watermark, no UI, no collage. Single finished image."
+    }
+  ]
+}

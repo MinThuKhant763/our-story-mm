@@ -1,0 +1,27 @@
+{
+  "description": "Original procedural synthesis for this project; no sampled recordings or downloaded songs.",
+  "generator": "scripts/generate-soundtracks.py",
+  "tracks": [
+    {
+      "path": "public/audio/tender-keys.wav",
+      "seconds": 16,
+      "sampleRate": 22050,
+      "channels": 1,
+      "sha256": "5ebd009a060ec397cc094b713326eb15e9b9f869e94f60c3255c2b1f2a7ab7f7"
+    },
+    {
+      "path": "public/audio/moonlit-dream.wav",
+      "seconds": 16,
+      "sampleRate": 22050,
+      "channels": 1,
+      "sha256": "167af2812393dfd9930943b06e8331fc13131ad5d20bcba5304f2fc7be18290a"
+    },
+    {
+      "path": "public/audio/garden-chimes.wav",
+      "seconds": 16,
+      "sampleRate": 22050,
+      "channels": 1,
+      "sha256": "e8924c5ee8e7e1d02c320e25483ad167cf7bce391d4a64c9cb12f844738f8045"
+    }
+  ]
+}

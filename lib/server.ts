@@ -1,0 +1,35 @@
+import {env} from '@/lib/runtime';
+import {readBox} from './box';
+import {requestOriginAllowed} from './origin';
+import type {Language} from './i18n';
+import {database,mediaStore} from './storage';
+import { getCurrentUser } from '@/lib/auth';
+import {readMusic} from './music';
+import { contentSchema,plans,publicState,type Gift,type GiftContent,type PaymentConfig,type TemplateId } from './gifts';
+export class ApiError extends Error{constructor(public status:number,message:string){super(message);}}
+export const db=database;
+export const bucket=mediaStore;
+export async function user(){const u=await getCurrentUser();if(!u)throw new ApiError(401,'Please sign in to continue.');return u;}
+export function json(data:unknown,status=200){return Response.json(data,{status,headers:{'Cache-Control':'no-store'}});}
+export function origin(req:Request){const configured=env().APP_URL||'http://localhost:3000';if(!requestOriginAllowed(req.headers.get('origin'),req.url,configured,['localhost','127.0.0.1','[::1]'].includes(new URL(configured).hostname),req.headers.get('host')))throw new ApiError(403,'This page address does not match APP_URL. Open '+new URL(configured).origin+' or update APP_URL in your environment file and restart the server.');}
+export async function api(fn:()=>Promise<Response>){try{return await fn();}catch(e){if(e instanceof ApiError)return json({error:e.message},e.status);if(e&&typeof e==='object'&&'issues' in e)return json({error:(e as {issues:{message:string}[]}).issues[0]?.message||'Check your entries.'},400);console.error('Request failed',e instanceof Error?e.message:'unknown');return json({error:'We couldn’t complete this request. Please try again.'},500);}}
+export type GiftRow={id:string;owner_id:string;token:string;content:string;template:TemplateId;plan:'basic'|'premium';status:string;pin_hash:string|null;reveal_at:number|null;voice_id:string|null;box_config:string;expires_at:number|null;paid_order_id:string|null;revision:number;created_at:number;updated_at:number};
+export async function giftRow(id:string){const row=await db().prepare('SELECT * FROM gifts WHERE id=?').bind(id).first<GiftRow>();if(!row)throw new ApiError(404,'Gift not found.');return row;}
+export async function ownGift(id:string){const u=await user();const row=await giftRow(id);if(row.owner_id!==u.userId)throw new ApiError(404,'Gift not found.');return {u,row};}
+export function dto(r:GiftRow):Gift{const content={occasion:'anniversary',...JSON.parse(r.content)} as GiftContent;content.music=readMusic(content.music);return {id:r.id,token:r.token,template:r.template,plan:r.plan,status:r.status,content,revision:r.revision,hasPin:!!r.pin_hash,box:readBox(r.box_config),revealAt:r.reveal_at,voiceId:r.voice_id,voiceUrl:r.voice_id?'/api/media/'+r.voice_id:null,expiresAt:r.expires_at,paidOrderId:r.paid_order_id,createdAt:r.created_at,updatedAt:r.updated_at,photos:content.photoIds.map(id=>({id,url:'/api/media/'+id}))};}
+export const defaultConfig:PaymentConfig={enabled:false,merchantName:'',method:'KBZPay',accountNumber:'',instructions:'Pay using the merchant details, upload your transfer screenshot, then enter the last 6 digits of your transaction ID. We’ll verify the received amount before approval.'};
+export async function setup(){return await db().prepare("SELECT * FROM settings WHERE id='workspace'").first<{id:string;owner_id:string;config:string}>();}
+export async function admin(){const u=await user();const s=await setup();if(!s||s.owner_id!==u.userId)throw new ApiError(403,'Workspace owner access is required.');return {u,s};}
+export async function config(){const s=await setup();return s?JSON.parse(s.config) as PaymentConfig:defaultConfig;}
+export async function audit(actor:string,action:string,target:string,note=''){await db().prepare('INSERT INTO audits (id,actor_id,action,target_id,note,created_at) VALUES (?,?,?,?,?,?)').bind(crypto.randomUUID(),actor,action,target,note,Date.now()).run();}
+export async function sha(value:string){return hex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value)));}
+export async function binarySha(bytes:Uint8Array){return hex(await crypto.subtle.digest('SHA-256',new Uint8Array(bytes)));}
+function hex(b:ArrayBuffer){return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
+async function pinDigest(pin:string,salt:string){const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);return hex(await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:100000,hash:'SHA-256'},key,256));}
+export async function hashPin(pin:string){const salt=crypto.randomUUID();return salt+':'+await pinDigest(pin,salt);}
+export async function checkPin(pin:string,stored:string){const [salt,expected]=stored.split(':');const actual=await pinDigest(pin,salt);let difference=actual.length^expected.length;for(let i=0;i<actual.length;i++)difference|=actual.charCodeAt(i)^(expected.charCodeAt(i)||0);return difference===0;}
+export async function canView(row:GiftRow,req:Request){if((row.reveal_at&&row.reveal_at>Date.now())||!publicState(row.status,row.expires_at,Date.now()))return false;if(!row.pin_hash)return true;const raw=(req.headers.get('cookie')||'').split(';').map(s=>s.trim()).find(s=>s.startsWith('gift_'+row.id+'='))?.split('=')[1];if(!raw)return false;const session=await db().prepare('SELECT * FROM viewer_sessions WHERE token_hash=? AND gift_id=? AND revision=? AND expires_at>?').bind(await sha(raw),row.id,row.revision,Date.now()).first();return !!session;}
+export async function validatePhotos(content:unknown,row:GiftRow,plan:'basic'|'premium'){const c=contentSchema.parse(content);if(c.photoIds.length>plans[plan].photos)throw new ApiError(400,'This package allows '+plans[plan].photos+' photos.');if(new Set(c.photoIds).size!==c.photoIds.length)throw new ApiError(400,'Remove duplicate photos.');const ids=await db().prepare(`SELECT id FROM media WHERE gift_id=? AND owner_id=? AND mime LIKE 'image/%'`).bind(row.id,row.owner_id).all<{id:string}>();if(c.photoIds.some(id=>!ids.results.some(m=>m.id===id)))throw new ApiError(400,'One photo is no longer available. Upload it again.');return c;}
+export async function imageFile(form:FormData,max=4*1024*1024){const file=form.get('file');if(!(file instanceof File)||file.size===0||file.size>max)throw new ApiError(400,'Choose a JPG, PNG or WebP image under 4 MB.');const buf=await file.arrayBuffer();const b=new Uint8Array(buf);let mime='';if(b[0]===255&&b[1]===216&&b[2]===255)mime='image/jpeg';else if(b[0]===137&&b[1]===80&&b[2]===78&&b[3]===71&&b[4]===13&&b[5]===10&&b[6]===26&&b[7]===10)mime='image/png';else if(new TextDecoder().decode(b.slice(0,4))==='RIFF'&&new TextDecoder().decode(b.slice(8,12))==='WEBP')mime='image/webp';if(!mime)throw new ApiError(400,'Choose a valid JPG, PNG or WebP image.');return {buf,mime};}
+
+export async function languageFor(userId:string):Promise<Language>{const p=await db().prepare('SELECT language FROM profiles WHERE user_id=?').bind(userId).first<{language:Language}>();return p?.language==='en'?'en':'my';}

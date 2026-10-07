@@ -1,0 +1,81 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import path from 'node:path';
+import { FiberTimer } from '../lib/fiber-timer.mjs';
+import config from '../vite.config.ts';
+import {build} from 'vite';
+
+test('Timer preserves Fiber seconds, auto-start, stop, restart and manual-frame fields', t => {
+  let now = 1000;
+  t.mock.method(performance, 'now', () => now);
+  const clock = new FiberTimer();
+  assert.equal(clock.getDelta(), 0);
+  now += 16;
+  assert.equal(clock.getDelta(), .016);
+  now += 84;
+  assert.equal(clock.getElapsedTime(), .1);
+  now += 100;
+  clock.stop();
+  assert.equal(clock.elapsedTime, .2);
+  now += 5000;
+  assert.equal(clock.getDelta(), 0);
+  assert.equal(clock.getElapsedTime(), .2);
+  clock.start();
+  assert.equal(clock.elapsedTime, 0);
+  now += 50;
+  assert.equal(clock.getDelta(), .05);
+  clock.stop();
+  clock.elapsedTime = 3;
+  clock.oldTime = 2;
+  assert.equal(clock.getDelta(), 0);
+  assert.equal(clock.elapsedTime, 3);
+  clock.start();
+  now += 20;
+  assert.equal(clock.getDelta(), .02);
+  const manual = new FiberTimer(false);
+  assert.equal(manual.getDelta(), 0);
+  manual.start();
+  now += 10;
+  assert.equal(manual.getDelta(), .01);
+});
+
+test('actual bundled Fiber creates Timer-backed roots without deprecation warnings', async t => {
+  const require = createRequire(import.meta.url);
+  const root = path.resolve(import.meta.dirname, '..');
+  const dir = await mkdtemp(path.join(root, '.timer-test-'));
+  try {
+    const entry = path.join(dir, 'entry.mjs');
+    await writeFile(entry, `export { createRoot, _roots } from '@react-three/fiber';
+      export { Vector3 } from 'three';
+      export { Vector3 as shimVector3, Clock as ShimClock } from '../lib/three-for-fiber.mjs';`);
+    await build({configFile:false,plugins:config.plugins,resolve:config.resolve,logLevel:'silent',build:{outDir:dir,emptyOutDir:false,minify:false,lib:{entry,formats:['cjs'],fileName:()=> 'bundle.cjs'}}});
+    const warnings = [];
+    t.mock.method(console, 'warn', (...args) => warnings.push(args.join(' ')));
+    const { createRoot, _roots, Vector3, shimVector3, ShimClock } = require(path.join(dir, 'bundle.cjs'));
+    assert.equal(Vector3, shimVector3, 'scene constructors must share Three identity');
+    const canvas = {};
+    createRoot(canvas);
+    const store = _roots.get(canvas).store;
+    assert.ok(store.getState().clock instanceof ShimClock, 'actual Fiber store must use adapter');
+    assert.ok(!warnings.some(w => /Clock.*deprecated/.test(w)), warnings.join('\n'));
+    // No WebGL in this test; a renderer stub lets store invalidation inspect XR.
+    store.setState({ gl: { xr: { isPresenting: false }, render() {} } });
+    store.getState().setFrameloop('never');
+    assert.equal(store.getState().clock.running, false);
+    assert.equal(store.getState().clock.elapsedTime, 0);
+    const deltas = [];
+    const unsubscribe = store.getState().internal.subscribe({ current: (_, delta) => deltas.push(delta) }, 0, store);
+    store.getState().advance(1, false);
+    store.getState().advance(1.25, false);
+    assert.deepEqual(deltas, [1, .25]);
+    assert.equal(store.getState().clock.oldTime, 1);
+    assert.equal(store.getState().clock.elapsedTime, 1.25);
+    unsubscribe();
+    store.getState().setFrameloop('demand');
+    assert.equal(store.getState().clock.running, true);
+    assert.equal(store.getState().clock.elapsedTime, 0);
+    _roots.delete(canvas);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});

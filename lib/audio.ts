@@ -1,0 +1,2 @@
+import {ApiError} from './server';
+export function audioMime(bytes:Uint8Array){const text=new TextDecoder().decode(bytes.slice(0,16));if(text.startsWith('RIFF')&&text.slice(8,12)==='WAVE')return 'audio/wav';if(text.startsWith('ID3')||(bytes[0]===255&&(bytes[1]&224)===224))return 'audio/mpeg';if(text.startsWith('OggS'))return 'audio/ogg';if(bytes[0]===26&&bytes[1]===69&&bytes[2]===223&&bytes[3]===163)return 'audio/webm';if(text.slice(4,8)==='ftyp')return 'audio/mp4';throw new ApiError(400,'Choose a valid MP3, WAV, M4A, OGG or WebM audio file.');}

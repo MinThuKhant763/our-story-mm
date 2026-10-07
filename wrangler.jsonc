@@ -1,0 +1,21 @@
+{
+  "$schema":"node_modules/wrangler/config-schema.json",
+  "name":"ourstory-mm-api",
+  "main":"worker/index.ts",
+  "compatibility_date":"2026-10-07",
+  "compatibility_flags":["nodejs_compat"],
+  "workers_dev":false,
+  "preview_urls":false,
+  "vars":{
+    "APP_URL":"https://ourstory-mm.pages.dev",
+    "OWNER_EMAIL":"minthukhant955@gmail.com",
+    "LOCAL_AUTH_UNVERIFIED":"false",
+    "EMAIL_FROM":"OurStory <accounts@example.com>",
+    "EMAIL_JOBS_ENABLED":"false",
+    "MAINTENANCE_MODE":"false"},
+  "d1_databases":[{"binding":"DB","database_name":"ourstory-mm","database_id":"28062eb1-cc1b-467b-98c9-6f9c97fb0cd0","migrations_dir":"db/migrations"}],
+  "r2_buckets":[{"binding":"MEDIA","bucket_name":"ourstory-mm-private"}],
+  "triggers":{"crons":["*/5 * * * *"]},
+  "observability":{"enabled":true},
+  "dev":{"port":8787,"ip":"127.0.0.1"}
+}

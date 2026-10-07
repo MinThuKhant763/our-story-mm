@@ -1,0 +1,5 @@
+import {useState} from 'react';
+import {request} from './common';
+import type {Language} from '@/lib/i18n';
+export function useLanguage(initial:Language){const [lang,setLang]=useState(initial),[languageSaving,setSaving]=useState(false),[languageError,setError]=useState('');async function changeLanguage(next:Language){if(next===lang||languageSaving)return;setLang(next);setSaving(true);setError('');try{await request('/api/account/language',{method:'PUT',body:JSON.stringify({language:next})});}catch(e){setError((e as Error).message);}finally{setSaving(false);}}return {lang,changeLanguage,languageSaving,languageError};}
+export function LanguageSwitch({lang,onChange,disabled=false}:{lang:Language;onChange:(lang:Language)=>void;disabled?:boolean}){return <div className="language-switch" role="group" aria-label={lang==='my'?'အသုံးပြုမည့်ဘာသာစကား':'Editor language'}><button type="button" lang="my" disabled={disabled} aria-pressed={lang==='my'} onClick={()=>onChange('my')}>မြန်မာ</button><button type="button" lang="en" disabled={disabled} aria-pressed={lang==='en'} onClick={()=>onChange('en')}>English</button></div>;}

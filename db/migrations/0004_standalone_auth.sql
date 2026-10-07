@@ -1,0 +1,11 @@
+CREATE TABLE users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, display_name TEXT NOT NULL, password_hash TEXT NOT NULL, verified INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL);
+CREATE TABLE auth_sessions (token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, expires_at INTEGER NOT NULL);
+CREATE INDEX auth_sessions_user ON auth_sessions(user_id);
+CREATE INDEX auth_sessions_expiry ON auth_sessions(expires_at);
+CREATE TABLE auth_tokens (token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, purpose TEXT NOT NULL CHECK(purpose IN ('verify','reset')), expires_at INTEGER NOT NULL, used_at INTEGER);
+CREATE INDEX auth_tokens_user ON auth_tokens(user_id,purpose);
+CREATE TABLE auth_limits (id TEXT PRIMARY KEY, attempts INTEGER NOT NULL, window_start INTEGER NOT NULL);
+CREATE INDEX gifts_owner ON gifts(owner_id,updated_at);
+CREATE INDEX media_gift ON media(gift_id);
+CREATE INDEX orders_owner ON orders(owner_id,created_at);
+CREATE UNIQUE INDEX orders_one_pending_per_gift ON orders(gift_id) WHERE status='pending';

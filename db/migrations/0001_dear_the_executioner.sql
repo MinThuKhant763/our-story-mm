@@ -1,0 +1,1 @@
+ALTER TABLE `orders` ADD `kind` text DEFAULT 'purchase' NOT NULL;

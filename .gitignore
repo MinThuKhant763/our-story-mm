@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build-worker/
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.env*
+data/
+backups/
+migration-export/
+restore-export/
+*.tsbuildinfo
+.timer-test-*/
+build-pages/

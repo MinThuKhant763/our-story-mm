@@ -1,0 +1,4 @@
+import {api,origin,user,db,json,ApiError} from '@/lib/server';
+type C={params:Promise<{id:string}>};
+export async function PATCH(req:Request,c:C){return api(async()=>{origin(req);const u=await user();const result=await db().prepare('UPDATE recipient_replies SET read_at=COALESCE(read_at,?) WHERE id=? AND gift_id IN (SELECT id FROM gifts WHERE owner_id=?)').bind(Date.now(),(await c.params).id,u.userId).run();if(!result.meta.changes)throw new ApiError(404,'Reply not found.');return json({ok:true});});}
+export async function DELETE(req:Request,c:C){return api(async()=>{origin(req);const u=await user();const result=await db().prepare('DELETE FROM recipient_replies WHERE id=? AND gift_id IN (SELECT id FROM gifts WHERE owner_id=?)').bind((await c.params).id,u.userId).run();if(!result.meta.changes)throw new ApiError(404,'Reply not found.');return json({ok:true});});}

@@ -1,0 +1,9 @@
+APP_URL=http://localhost:5173
+OWNER_EMAIL=owner@example.com
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+LOCAL_AUTH_UNVERIFIED=true
+EMAIL_JOBS_ENABLED=false
+MAINTENANCE_MODE=false
+RESEND_API_KEY=
+EMAIL_FROM=OurStory <accounts@example.com>
