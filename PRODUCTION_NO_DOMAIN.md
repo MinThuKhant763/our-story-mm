@@ -125,6 +125,8 @@ npm run deploy:pages
 
 Use this npm script rather than `wrangler pages deploy --config wrangler.pages.jsonc`: Pages does not accept custom configuration paths. The script stages the Pages configuration under its standard filename, retains the API service binding, and targets the production branch `main`. Run `npm run deploy:pages -- --check` first for a local configuration and Functions build check without deploying.
 
+If Wrangler fails while retrieving `/accounts`, set `CLOUDFLARE_ACCOUNT_ID` to the 32-character Account ID from the Cloudflare dashboard. Alternatively, add `account_id` to `wrangler.pages.jsonc`; the deployment helper forwards it through the supported environment variable. This skips automatic account discovery, but does not bypass authentication or resolve errors from other API endpoints.
+
 Open `https://YOUR-PROJECT-NAME.pages.dev`. If using Cloudflare Git integration instead of CLI deployment, configure the project-root Pages Function and service binding from `wrangler.pages.jsonc`; do not use the API Worker config as the Pages config.
 
 ## 8. Verify Google sign-in and initialize the owner workspace
