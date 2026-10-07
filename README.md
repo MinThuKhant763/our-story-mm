@@ -64,3 +64,21 @@ API integration uses workerd with actual local D1 and R2. Render checks verify b
 
 No cloud resources have been created or deployed by this ZIP. Set your account-specific database ID, Pages name/domain, Google OAuth credentials, and optional email-job settings before deployment. Keep `.dev.vars`, `.wrangler`, migration exports, decrypted backups and encryption keys out of Git.
 # our-story-mm
+
+## Google login configuration
+
+Google login is implemented at `/api/auth/google` with OAuth state validation, PKCE, verified email matching, and a revocable session cookie. Cancelling consent is shown separately from a failed sign-in. Integration tests mock only Google's HTTPS responses and exercise the real Worker, Pages service binding, D1 and R2.
+
+For `https://ourstory-mm.pages.dev`, create a Google OAuth **Web application** client and register this exact redirect URI:
+
+```text
+https://ourstory-mm.pages.dev/api/auth/google
+```
+
+Set its public client ID in `wrangler.jsonc` under `vars.GOOGLE_CLIENT_ID`. Store the matching secret on **the API Worker `ourstory-mm-api`**, not just on Pages, using Cloudflare's Variables and Secrets settings or `npx wrangler secret put GOOGLE_CLIENT_SECRET --config wrangler.jsonc`. Add your account as a test user if Google's app audience is in Testing. Keep `APP_URL` equal to the site's canonical URL.
+
+For local login, set both credentials in the ignored `.dev.vars` and also register `http://localhost:5173/api/auth/google`. Restart the Worker after changing local bindings. No real OAuth credentials are included in this project.
+
+After configuration, deploy both the API Worker and Pages using `npm run deploy:api` and `npm run deploy:pages` (after `npm run build`). Local file edits or a Pages-only deployment do not update the API Worker. Before deployment, run `npm run typecheck`, `npm run build:api`, `npm run build`, and `npm run test:integration`.
+
+If sign-in fails after deployment, the final login URL includes a safe `reason` such as `state_mismatch`, `token_exchange_rejected`, or `profile_request_rejected`; the Worker logs the same stage and any upstream HTTP status without authorization codes, tokens, or secrets. OAuth attempts expire after ten minutes; sign in from one tab and start again after a deployment.

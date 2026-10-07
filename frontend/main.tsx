@@ -45,7 +45,7 @@ function App(){
   if(segments[1]==='edit'&&segments.length===3)return <Editor name={name} initialLanguage={lang} giftId={segments[2]} initialStep={q.get('step')==='3'?3:0}/>;
   if(segments[1]==='gift'&&segments.length===3)return <Viewer token={segments[2]}/>;
   if(segments[1]==='demo'&&isTemplateId(segments[2])&&segments.length===3)return <Demo template={segments[2]} giftStyle={giftStyle} occasion={occasion} initialLanguage={q.get('lang')==='my'?'my':'en'}/>;
-  if(['/login','/register','/forgot','/verify','/reset','/logout'].includes(path))return <AuthForm mode={path==='/logout'?'logout':'login'} errorCode={q.get('error')||''} returnTo={safeReturn(q.get('return_to')||'/dashboard')}/>;
+  if(['/login','/register','/forgot','/verify','/reset','/logout'].includes(path))return <AuthForm mode={path==='/logout'?'logout':'login'} errorCode={q.get('error')||''} errorReason={q.get('reason')||''} returnTo={safeReturn(q.get('return_to')||'/dashboard')}/>;
   if(path==='/privacy')return <Privacy/>;
   if(path==='/terms')return <Terms/>;
   return <main className="legal-page"><h1>Page not found</h1><a className="btn primary" href="/">Back to OurStory</a></main>;

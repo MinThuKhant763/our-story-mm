@@ -9,6 +9,7 @@
   "vars":{
     "APP_URL":"https://ourstory-mm.pages.dev",
     "OWNER_EMAIL":"minthukhant955@gmail.com",
+    "GOOGLE_CLIENT_ID":"",
     "LOCAL_AUTH_UNVERIFIED":"false",
     "EMAIL_FROM":"OurStory <accounts@example.com>",
     "EMAIL_JOBS_ENABLED":"false",

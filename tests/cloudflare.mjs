@@ -14,11 +14,29 @@ const root=new URL('../',import.meta.url).pathname;
 const dataDirectory=await mkdtemp(join(tmpdir(),'ourstory-test-'));
 const base='http://localhost:5173';
 const pagesProxy=(await transform(await readFile(join(root,'functions/api/[[path]].ts'),'utf8'),{loader:'ts',format:'esm'})).code+'\nexport default {fetch(request,env){return onRequest({request,env})}};';
+const oauthCodes=new Map();
+async function googleFixture(request){
+ const url=new URL(request.url);
+ if(url.hostname==='oauth2.googleapis.com'&&url.pathname==='/token'){
+  const form=new URLSearchParams(await request.text()),fixture=oauthCodes.get(form.get('code'));
+  if(!fixture)return Response.json({error:'invalid_grant'},{status:400});
+  assert.equal(form.get('client_id'),'integration-client');assert.equal(form.get('client_secret'),'integration-secret');
+  assert.equal(form.get('redirect_uri'),base+'/api/auth/google');assert.equal(form.get('grant_type'),'authorization_code');
+  assert.equal(createHash('sha256').update(form.get('code_verifier')||'').digest('base64url'),fixture.challenge);
+  oauthCodes.delete(form.get('code'));
+  return Response.json({access_token:fixture.role});
+ }
+ if(url.hostname==='www.googleapis.com'&&url.pathname==='/oauth2/v2/userinfo'){
+  const role=request.headers.get('authorization')?.replace('Bearer ','');
+  return Response.json({id:'google-'+role,email:role+'@example.test',name:role,verified_email:role!=='unverified'});
+ }
+ throw Error('Unexpected outbound service request');
+}
 const runtime=new Miniflare(convertV4MiniflareOptions({resourcePersistencePath:dataDirectory,workers:[
  {name:'pages',modules:true,script:pagesProxy,compatibilityDate:'2026-10-07',serviceBindings:{API:'api'}},
- {name:'api',modules:true,scriptPath:join(root,'build-worker/index.js'),compatibilityDate:'2026-10-07',compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'test-database'},r2Buckets:{MEDIA:'test-media'},bindings:{APP_URL:base,OWNER_EMAIL:'owner@example.test',LOCAL_AUTH_UNVERIFIED:'true',RESEND_API_KEY:'',EMAIL_FROM:'',EMAIL_JOBS_ENABLED:'false'}}
+ {name:'api',modules:true,scriptPath:join(root,'build-worker/index.js'),compatibilityDate:'2026-10-07',compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'test-database'},r2Buckets:{MEDIA:'test-media'},outboundService:googleFixture,bindings:{APP_URL:base,GOOGLE_CLIENT_ID:'integration-client',GOOGLE_CLIENT_SECRET:'integration-secret',OWNER_EMAIL:'owner@example.test',LOCAL_AUTH_UNVERIFIED:'true',RESEND_API_KEY:'',EMAIL_FROM:'',EMAIL_JOBS_ENABLED:'false'}}
 ]}));
-const mf={dispatchFetch:(url,options)=>runtime.dispatchFetch(url,options)};
+const mf={dispatchFetch:(url,options)=>runtime.dispatchFetch(url,{redirect:'manual',...options})};
 const sessions={};
 let connection;
 const database={prepare(sql){return {bind(...args){return {run:async()=>connection.prepare(sql).run(...args)}}}}};
@@ -33,16 +51,43 @@ const image=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR
 const nextMonthlyExpiry=timestamp=>{const date=new Date(timestamp+23400000);date.setUTCMonth(date.getUTCMonth()+1);return date.getTime()-23400000;};
 let checks=0;
 async function call(path,{method='GET',as='owner',body,cookie,expect=200,binary=false}={}){const headers={};if(as&&sessions[as])headers.Cookie=sessions[as];if(method!=='GET')headers.origin=base;if(body&&!(body instanceof FormData)){headers['Content-Type']='application/json';body=JSON.stringify(body);}if(body instanceof FormData){const formRequest=new Request(base+path,{method,body});headers['Content-Type']=formRequest.headers.get('Content-Type');body=await formRequest.arrayBuffer();}if(cookie)headers.Cookie=cookie;const response=await mf.dispatchFetch(base+path,{method,headers,body});const text=binary?Buffer.from(await response.arrayBuffer()):await response.text();assert.equal(response.status,expect,path+': '+String(text).slice(0,200));checks++;let data;try{data=binary?text:JSON.parse(text);}catch{data=text;}return {response,data};}
+async function beginGoogle(returnTo='/dashboard'){
+ const response=await mf.dispatchFetch(base+'/api/auth/google?return_to='+encodeURIComponent(returnTo));
+ assert.equal(response.status,302);checks++;
+ const url=new URL(response.headers.get('location'));
+ assert.equal(url.origin,'https://accounts.google.com');assert.equal(url.searchParams.get('redirect_uri'),base+'/api/auth/google');
+ assert.equal(url.searchParams.get('code_challenge_method'),'S256');assert.ok(url.searchParams.get('scope').includes('openid'));
+ const cookie=response.headers.get('set-cookie');assert.ok(cookie.includes('HttpOnly'));assert.ok(cookie.includes('SameSite=Lax'));
+ return {state:url.searchParams.get('state'),challenge:url.searchParams.get('code_challenge'),cookie:cookie.split(';')[0]};
+}
+async function googleLogin(role,returnTo='/dashboard'){
+ const attempt=await beginGoogle(returnTo),code=role+'-'+attempt.state;
+ oauthCodes.set(code,{role,challenge:attempt.challenge});
+ const response=await mf.dispatchFetch(base+'/api/auth/google?'+new URLSearchParams({code,state:attempt.state}),{headers:{Cookie:attempt.cookie}});
+ assert.equal(response.status,302);checks++;
+ return response;
+}
+async function signIn(role,returnTo='/dashboard'){
+ const response=await googleLogin(role,returnTo);
+ assert.equal(new URL(response.headers.get('location')).pathname,returnTo.startsWith('//')?'/dashboard':returnTo.split('?')[0]);
+ const cookie=response.headers.getSetCookie().find(value=>value.startsWith('ourstory_session='));assert.ok(cookie);
+ sessions[role]=cookie.split(';')[0];
+ return response;
+}
 function imageForm(reference){const f=new FormData();f.set('file',new File([image],'receipt.png',{type:'image/png'}));if(reference)f.set('reference',reference);return f;}
 try{
  await ready();
 
- for(const role of ['owner','other']){const registration=await call('/api/auth/register',{method:'POST',as:null,body:{email:role+'@example.test',password:'A-long-test-password-2026!',displayName:role},expect:201});sessions[role]=registration.response.headers.get('set-cookie').split(';')[0];}
+ for(const role of ['owner','other'])await signIn(role);
  const spoof=await mf.dispatchFetch(base+'/api/gifts',{headers:{'oai-authenticated-user-id':'owner','oai-authenticated-user-email':'owner@example.test'}});assert.equal(spoof.status,401);checks++;
- await call('/api/auth/login',{method:'POST',as:null,body:{email:'owner@example.test',password:'wrong'},expect:401});
- const signedIn=await call('/api/auth/login',{method:'POST',as:null,body:{email:'owner@example.test',password:'A-long-test-password-2026!'}});sessions.owner=signedIn.response.headers.get('set-cookie').split(';')[0];
- const cross=await mf.dispatchFetch(base+'/api/auth/login',{method:'POST',headers:{Origin:'https://evil.example','Content-Type':'application/json'},body:JSON.stringify({email:'owner@example.test',password:'A-long-test-password-2026!'})});assert.equal(cross.status,403);checks++;
- const large=await mf.dispatchFetch(base+'/api/auth/login',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:'x'.repeat(9000)});assert.equal(large.status,413);checks++;
+ for(const action of ['login','register','verify','reset'])await call('/api/auth/'+action,{method:'POST',as:null,body:{},expect:410});
+ const cross=await mf.dispatchFetch(base+'/api/auth/logout',{method:'POST',headers:{Origin:'https://evil.example'}});assert.equal(cross.status,403);checks++;
+ const missingState=await mf.dispatchFetch(base+'/api/auth/google?code=unused&state=unused');assert.equal(new URL(missingState.headers.get('location')).searchParams.get('reason'),'state_cookie_missing');checks++;
+ const mismatch=await beginGoogle();const mismatched=await mf.dispatchFetch(base+'/api/auth/google?code=unused&state=wrong',{headers:{Cookie:mismatch.cookie}});assert.equal(new URL(mismatched.headers.get('location')).searchParams.get('reason'),'state_mismatch');checks++;
+ const rejected=await beginGoogle();const rejectedToken=await mf.dispatchFetch(base+'/api/auth/google?code=unknown&state='+rejected.state,{headers:{Cookie:rejected.cookie}});assert.equal(new URL(rejectedToken.headers.get('location')).searchParams.get('reason'),'token_exchange_rejected');checks++;
+ const denied=await mf.dispatchFetch(base+'/api/auth/google?error=access_denied');assert.equal(new URL(denied.headers.get('location')).searchParams.get('error'),'google_cancelled');assert.ok(denied.headers.get('set-cookie').includes('Max-Age=0'));checks++;
+ const unverified=await googleLogin('unverified');assert.equal(new URL(unverified.headers.get('location')).searchParams.get('reason'),'profile_unverified_or_incomplete');assert.equal(connection.prepare('SELECT COUNT(*) AS n FROM users WHERE email=?').get('unverified@example.test').n,0);checks++;
+ await signIn('owner','//evil.example');
  assert.ok((await readFile(join(root,'dist/index.html'),'utf8')).includes('OurStory MM'));
  await call('/api/gifts',{as:null,expect:401});await call('/api/account',{as:null,expect:401});await call('/api/account',{method:'PUT',body:{displayName:'ကိုကို',language:'my'}});assert.equal((await call('/api/account')).data.profile.display_name,'ကိုကို');assert.notEqual((await call('/api/account',{as:'other'})).data.profile.display_name,'ကိုကို');
  await call('/api/account/language',{method:'PUT',as:null,body:{language:'my'},expect:401});await call('/api/account/language',{method:'PUT',body:{language:'th'},expect:400});await call('/api/account/language',{method:'PUT',body:{language:'en'}});assert.equal((await call('/api/account')).data.profile.display_name,'ကိုကို');assert.equal((await call('/api/account')).data.profile.language,'en');await call('/api/account/language',{method:'PUT',body:{language:'my'}});
@@ -440,22 +485,14 @@ try{
  await call('/api/gifts/'+extraGift.id,{method:'DELETE'});
  const deletedTrack=(await call('/api/order-status')).data.tracks.find(t=>t.id===g.id);assert.equal(deletedTrack.stage,'deleted');assert.equal(deletedTrack.gift,null);assert.equal(deletedTrack.orders.length,2);
  const objects=await (await runtime.getR2Bucket('MEDIA','api')).list({prefix:'photos/'+g.id+'/'});assert.equal(objects.objects.length,0);
- // Single-use account tokens and session revocation operate independently of platform identity.
+ // Google reuses existing accounts and creates a fresh revocable session.
  const owner=connection.prepare('SELECT id FROM users WHERE email=?').get('owner@example.test');
- const hash=t=>createHash('sha256').update(t).digest('hex');
- const verification='ab'.repeat(32);connection.prepare('UPDATE users SET verified=0 WHERE id=?').run(owner.id);
- connection.prepare('INSERT INTO auth_tokens (token_hash,user_id,purpose,expires_at) VALUES (?,?,?,?)').run(hash(verification),owner.id,'verify',Date.now()+100000);
+ connection.prepare('UPDATE users SET verified=0 WHERE id=?').run(owner.id);
  await call('/api/account',{expect:401});
- await call('/api/auth/verify',{method:'POST',as:null,body:{token:verification}});
- await call('/api/auth/verify',{method:'POST',as:null,body:{token:verification},expect:400});
- const resetToken='cd'.repeat(32);connection.prepare('INSERT INTO auth_tokens (token_hash,user_id,purpose,expires_at) VALUES (?,?,?,?)').run(hash(resetToken),owner.id,'reset',Date.now()+100000);
- await call('/api/auth/reset',{method:'POST',as:null,body:{token:resetToken,password:'A-new-long-password-2026!'}});
- await call('/api/account',{expect:401});
- await call('/api/auth/reset',{method:'POST',as:null,body:{token:resetToken,password:'A-new-long-password-2026!'},expect:400});
- await call('/api/auth/login',{method:'POST',as:null,body:{email:'owner@example.test',password:'A-long-test-password-2026!'},expect:401});
- const renewed=await call('/api/auth/login',{method:'POST',as:null,body:{email:'owner@example.test',password:'A-new-long-password-2026!'}});sessions.owner=renewed.response.headers.get('set-cookie').split(';')[0];
- await call('/api/auth/logout',{method:'POST',body:{}});await call('/api/account',{expect:401});
- for(let i=0;i<11;i++)await call('/api/auth/login',{method:'POST',as:null,body:{email:'nobody@example.test',password:'wrong'},expect:i<10?401:429});
+ await signIn('owner');
+ assert.equal(connection.prepare('SELECT id FROM users WHERE email=?').get('owner@example.test').id,owner.id);
+ assert.equal(connection.prepare('SELECT COUNT(*) AS n FROM users WHERE email=?').get('owner@example.test').n,1);
+ await call('/api/account');await call('/api/auth/logout',{method:'POST',body:{}});await call('/api/account',{expect:401});
  console.log('PASS: '+checks+' API checks; five occasion presets with legacy default/import/artwork checks; private replies with PIN/schedule/expiry/rate/ownership gates, reminder preferences, four gift styles/accessories/secrets with portable settings, six templates, monthly periods and annual retention; pricing, last-six validation, suffix collisions, merchant transaction uniqueness, legacy quotes;  ownership, revision conflicts, PIN/media access, payment gate, approval idempotency, renewal and refund revocation, photo deletion, account isolation, voice access, scheduled reveal, portable backup/restore, box personalization and order tracking.');
 }finally{if(connection)connection.close();await runtime.dispose();await rm(dataDirectory,{recursive:true,force:true});}
 

@@ -65,3 +65,10 @@ for(const lang of ['en','my']){const html=renderToStaticMarkup(React.createEleme
 for(const kind of ['bouquet','bear','chocolate']){const svg=renderToStaticMarkup(React.createElement(ShopItemArt,{kind}));assert.ok(svg.startsWith('<svg'));assert.ok(!svg.includes('http'));}
 console.log('PASS: bilingual gift shop shelf/slots and packed recipient contents render, old gifts remain unchanged and no external model/font/image requests are needed.');
 if(process.env.SHOP_ART_QA){const svgs=['bouquet','bear','chocolate'].map(kind=>renderToStaticMarkup(React.createElement(ShopItemArt,{kind})));const montage='<svg xmlns="http://www.w3.org/2000/svg" width="720" height="340" viewBox="0 0 720 340"><rect width="720" height="340" fill="#f8f1e7"/>'+svgs.map((svg,i)=>'<g transform="translate('+((i*240)+40)+' 30)">'+svg.replace('<svg ','<svg width="160" height="230" ')+'</g><text x="'+(i*240+120)+'" y="295" text-anchor="middle" fill="#506549" font-size="20" font-family="Arial">'+['Flowers','Teddy','Chocolate'][i]+'</text>').join('')+'</svg>';fs.writeFileSync(process.env.SHOP_ART_QA,montage);}
+
+const {AuthForm}=require(path.join(root,'components/ourstory/auth-form.tsx'));
+for(const props of [{errorCode:'google_cancelled'},{errorCode:'google_failed',errorReason:'state_mismatch'},{errorCode:'google_not_configured'}]){
+ const markup=renderToStaticMarkup(React.createElement(AuthForm,props));
+ assert.ok(markup.includes('role="alert"'));assert.ok(markup.includes('/api/auth/google?return_to='));assert.ok(!markup.includes('client_secret'));
+}
+console.log('PASS: Google cancellation, expired sign-in and missing configuration render actionable notices.');

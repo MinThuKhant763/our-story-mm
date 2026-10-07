@@ -7,7 +7,7 @@ build-worker/
 !.dev.vars.example
 .env*
 data/
-backups/
+/backups/
 migration-export/
 restore-export/
 *.tsbuildinfo
